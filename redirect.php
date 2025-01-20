@@ -33,11 +33,8 @@
             </div>
         </div>
     </nav>
-
     <!-- hasil -->
     <div class="container mt-5">
-
-        
         <?php 
         $sql = "SELECT pemesanan_tiket.*, `tempat-wisata`.tempat_wisata, `tempat-wisata`.harga 
                 FROM pemesanan_tiket 
@@ -52,49 +49,37 @@
         
         <div class="row justify-content-center">
             <div class="col-md-8">
-                <div class="card shadow-sm mb-4">
+                <div class="card shadow-sm">
                     <div class="card-header bg-dark text-white">
                         <h5 class="card-title mb-0">Detail Pemesanan Tiket</h5>
                     </div>
                     <div class="card-body">
-                        <div class="row mb-3">
-                            <div class="col-md-6">
-                                <h6 class="text-muted">Informasi Pemesan</h6>
-                                <p class="mb-1"><strong>Nama:</strong> <?php echo $data['nama']; ?></p>
-                                <p class="mb-1"><strong>No. Identitas:</strong> <?php echo $data['no_identitas']; ?></p>
-                                <p class="mb-1"><strong>No. HP:</strong> <?php echo $data['no_hp']; ?></p>
-                            </div>
-                            <div class="col-md-6">
-                                <h6 class="text-muted">Detail Wisata</h6>
-                                <p class="mb-1"><strong>Tempat Wisata:</strong> <?php echo $data['tempat_wisata']; ?></p>
-                                <p class="mb-1"><strong>Tanggal Kunjungan:</strong> <?php echo $data['tanggal']; ?></p>
-                            </div>
-                        </div>
-                        
-                        <div class="row">
-                            <div class="col-12">
-                                <h6 class="text-muted">Rincian Pengunjung & Biaya</h6>
-                                <div class="bg-light p-3 rounded">
-                                    <div class="d-flex justify-content-between mb-2">
-                                        <span>Jumlah Pengunjung:</span>
-                                        <span><?php echo $data['jumlah_pengunjung']; ?> orang</span>
-                                    </div>
-                                    <div class="d-flex justify-content-between mb-2">
-                                        <span>Pengunjung Anak:</span>
-                                        <span><?php echo $data['pengunjung_anak']; ?> anak</span>
-                                    </div>
-                                    <div class="d-flex justify-content-between mb-2">
-                                        <span>Potongan Harga:</span>
-                                        <span>Rp <?php echo number_format($potongan, 0, ',', '.'); ?></span>
-                                    </div>
-                                    <hr>
-                                    <div class="d-flex justify-content-between">
-                                        <strong>Total Pembayaran:</strong>
-                                        <strong class="text-primary"><?= $data['total'] ?></strong>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+                        <table class="table table-bordered">
+                        <tbody>
+                        <?php 
+                        $no = 1;
+                        $sql = "SELECT pemesanan_tiket.*, `tempat-wisata`.tempat_wisata, `tempat-wisata`.harga 
+                        FROM pemesanan_tiket 
+                        JOIN `tempat-wisata` ON pemesanan_tiket.id_tempat = `tempat-wisata`.id_tempat 
+                        WHERE pemesanan_tiket.id = (SELECT MAX(id) FROM pemesanan_tiket)";
+                        $query = mysqli_query($connect, $sql);
+
+                        while($data = mysqli_fetch_array($query)){
+                            echo "<tr>";
+                            echo "<td>".$no++."</td>";
+                            echo "<td>".$data['nama']."</td>";
+                            echo "<td>".$data['jenis_kelamin']."</td>";
+                            echo "<td>".$data['jenis_kamar']."</td>";
+                            echo "<td>".$data['no_identitas']."</td>";
+                            echo "<td>".$data['tanggal_pesan']."</td>";
+                            echo "<td>".$data['durasi_menginap']." malam</td>";
+                            echo "<td>".$data['diskon']."%</td>";
+                            echo "<td>".$data['total']."</td>";
+                            echo "</tr>";
+                        }
+                        ?>
+                    </tbody>
+                        </table>
                     </div>
                 </div>
             </div>
