@@ -148,7 +148,15 @@
                 JOIN `tempat-wisata` ON pemesanan_tiket.tempat_wisata = `tempat-wisata`.id_tempat
                 WHERE pemesanan_tiket.id = (SELECT MAX(id) FROM pemesanan_tiket)";
 
-                if ($connect->query($sql)) {
+                $query = mysqli_query($connect, $sql2);
+                while ($data = mysqli_fetch_array($query)) {
+                $potongan = $data['harga'] * $data['pengunjung_anak'];
+
+                $tempat_wisata = $data['tempat_wisata'];
+                $harga = $data['harga'];
+                }
+
+                if ($connect->query($sql2)) {
                 echo "<script>
                 Swal.fire({
                     icon: 'success',
@@ -166,6 +174,7 @@
                             <p><strong>Tanggal Kunjungan:</strong> $tanggal</p>
                             <p><strong>Jumlah Pengunjung:</strong> $jumlah_pengunjung</p>
                             <p><strong>Pengunjung Anak:</strong> $pengunjung_anak</p>
+                            <p><strong>Potongan harga:</strong> Rp. $potongan</p>
                             <p><strong>Total Bayar:</strong> $total</p>
                         `,
                         icon: 'info',
