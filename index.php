@@ -139,40 +139,45 @@
                 $jumlah_pengunjung = $_POST['jumlah_pengunjung'];
                 $pengunjung_anak = $_POST['pengunjung_anak'];
                 $total = $_POST['total'];
-
-                $sql = "INSERT INTO pemesanan_tiket (nama, no_identitas, no_hp, tempat_wisata, tanggal, jumlah_pengunjung, pengunjung_anak, total) VALUES ('$nama', '$no_identitas', '$no_hp', '$tempat_wisata', '$tanggal', '$jumlah_pengunjung', '$pengunjung_anak', '$total')";
                 
-                //buat diskon
-                $sql2 = "SELECT pemesanan_tiket.*, `tempat-wisata`.tempat_wisata, `tempat-wisata`.harga 
-                FROM pemesanan_tiket 
-                JOIN `tempat-wisata` ON pemesanan_tiket.tempat_wisata = `tempat-wisata`.id_tempat
-                WHERE pemesanan_tiket.id = (SELECT MAX(id) FROM pemesanan_tiket)";
-
+                $sql = "INSERT INTO pemesanan_tiket (nama, no_identitas, no_hp, tempat_wisata, tanggal, jumlah_pengunjung, pengunjung_anak, total) VALUES ('$nama', '$no_identitas', '$no_hp', '$tempat_wisata', '$tanggal', '$jumlah_pengunjung', '$pengunjung_anak', '$total')";
+        
                 if ($connect->query($sql)) {
-                echo "<script>
-                Swal.fire({
-                    icon: 'success',
-                    title: 'Berhasil!',
-                    text: 'Pemesanan tiket berhasil disimpan',
-                    confirmButtonColor: '#212529'
-                }).then(() => {
-                    Swal.fire({
-                        title: 'Data Pemesanan',
-                        html: `
-                            <p><strong>Nama:</strong> $nama</p>
-                            <p><strong>Nomor Identitas:</strong> $no_identitas</p>
-                            <p><strong>Nomor HP:</strong> $no_hp</p>
-                            <p><strong>Tempat Wisata:</strong> $tempat_wisata</p>
-                            <p><strong>Tanggal Kunjungan:</strong> $tanggal</p>
-                            <p><strong>Jumlah Pengunjung:</strong> $jumlah_pengunjung</p>
-                            <p><strong>Pengunjung Anak:</strong> $pengunjung_anak</p>
-                            <p><strong>Total Bayar:</strong> $total</p>
-                        `,
-                        icon: 'info',
-                        confirmButtonText: 'OK'
-                    });
-                });
-                </script>";
+                    $sql2 = "SELECT pemesanan_tiket.*, `tempat-wisata`.tempat_wisata, `tempat-wisata`.harga FROM pemesanan_tiket JOIN `tempat-wisata` ON pemesanan_tiket.tempat_wisata = `tempat-wisata`.id_tempat WHERE pemesanan_tiket.id = (SELECT MAX(id) FROM pemesanan_tiket)";
+  
+                    $query = mysqli_query($connect, $sql2);
+                    while ($data = mysqli_fetch_array($query)) {
+                        $potongan = $data['harga'] * $data['pengunjung_anak'];
+                    
+                        $tempat_wisata = $data['tempat_wisata'];
+                        $harga = $data['harga'];
+                    }
+                
+                    echo "<script>
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Berhasil!',
+                            text: 'Pemesanan tiket berhasil disimpan',
+                            confirmButtonColor: '#212529'
+                        }).then(() => {
+                            Swal.fire({
+                                title: 'Data Pemesanan',
+                                html: `
+                                    <p><strong>Nama:</strong> $nama</p>
+                                    <p><strong>Nomor Identitas:</strong> $no_identitas</p>
+                                    <p><strong>Nomor HP:</strong> $no_hp</p>
+                                    <p><strong>Tempat Wisata:</strong> $tempat_wisata</p>
+                                    <p><strong>Tanggal Kunjungan:</strong> $tanggal</p>
+                                    <p><strong>Jumlah Pengunjung:</strong> $jumlah_pengunjung</p>
+                                    <p><strong>Pengunjung Anak:</strong> $pengunjung_anak</p>
+                                    <p><strong>Potongan harga:</strong> Rp. $potongan</p>
+                                    <p><strong>Total Bayar:</strong> $total</p>
+                                `,
+                                icon: 'info',
+                                confirmButtonText: 'OK'
+                            });
+                        });
+                    </script>";
                 }
             }
         ?>
