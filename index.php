@@ -1,4 +1,5 @@
 <?php
+    session_start();
     include "koneksi.php";
 ?>
 
@@ -9,7 +10,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Pemesanan tiket</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   </head>
   <body>
     <!-- navbar -->
@@ -72,7 +72,6 @@
                                         }
                                     ?>
                                 </select>
-
                             </div>
                             <div class="mb-3">
                                 <label for="exampleInputEmail1" class="form-label fw-semibold">Tanggal kunjungan</label>
@@ -116,10 +115,11 @@
                                     <button type="button" class="btn btn-secondary me-2" id="hitungTotal">Hitung Total Bayar</button>
                                 </div>
                                 <div class="p-2">
-                                    <button type="submit" class="btn btn-dark" id="submit" name="submit">Pesan tiket</button>
+                                    <!-- Modify the form submit button to include data-bs-toggle -->
+<button type="submit" class="btn btn-dark" id="submit" name="submit" data-bs-toggle="modal" data-bs-target="#pemesananModal">Pesan tiket</button>
                                 </div>
                                 <div class="p-2">
-                                    <button type="submit" class="btn btn-danger" id="submit" name="cancel">Cancel</button>
+                                    <button type="reset" class="btn btn-danger" id="reset">Cancel</button>
                                 </div>
                             </div>
                         </form>
@@ -130,62 +130,182 @@
     </div>
 
     <?php
-            if (isset($_POST['submit'])) {
-                $nama = $_POST['nama'];
-                $no_identitas = $_POST['no_identitas'];
-                $no_hp = $_POST['no_hp'];
-                $tempat_wisata = $_POST['tempat_wisata'];
-                $tanggal = $_POST['tanggal'];
-                $jumlah_pengunjung = $_POST['jumlah_pengunjung'];
-                $pengunjung_anak = $_POST['pengunjung_anak'];
-                $total = $_POST['total'];
-                
-                $sql = "INSERT INTO pemesanan_tiket (nama, no_identitas, no_hp, tempat_wisata, tanggal, jumlah_pengunjung, pengunjung_anak, total) VALUES ('$nama', '$no_identitas', '$no_hp', '$tempat_wisata', '$tanggal', '$jumlah_pengunjung', '$pengunjung_anak', '$total')";
+// session_start();
+include "koneksi.php";
+
+// Initialize variables
+$formData = [
+    'nama' => '',
+    'no_identitas' => '',
+    'no_hp' => '',
+    'tempat_wisata' => '',
+    'tanggal' => '',
+    'jumlah_pengunjung' => '',
+    'pengunjung_anak' => '',
+    'total' => '',
+    'potongan' => '',
+    'tempat_wisata_nama' => ''
+];
+
+// Process form submission
+if (isset($_POST['submit'])) {
+    // Capture form data
+    $formData = [
+        'nama' => $_POST['nama'],
+        'no_identitas' => $_POST['no_identitas'],
+        'no_hp' => $_POST['no_hp'],
+        'tempat_wisata' => $_POST['tempat_wisata'],
+        'tanggal' => $_POST['tanggal'],
+        'jumlah_pengunjung' => $_POST['jumlah_pengunjung'],
+        'pengunjung_anak' => $_POST['pengunjung_anak'],
+        'total' => $_POST['total']
+    ];
+
+    // Insert into database
+    $sql = "INSERT INTO pemesanan_tiket (nama, no_identitas, no_hp, tempat_wisata, tanggal, jumlah_pengunjung, pengunjung_anak, total) 
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+    
+    $stmt = $connect->prepare($sql);
+    $stmt->bind_param("sssssiid", 
+        $formData['nama'],
+        $formData['no_identitas'],
+        $formData['no_hp'],
+        $formData['tempat_wisata'],
+        $formData['tanggal'],
+        $formData['jumlah_pengunjung'],
+        $formData['pengunjung_anak'],
+        $formData['total']
+    );
+
+    if ($stmt->execute()) {
+        // Get additional details for the modal
+        $sql2 = "SELECT pt.*, tw.tempat_wisata, tw.harga 
+                FROM pemesanan_tiket pt 
+                JOIN `tempat-wisata` tw ON pt.tempat_wisata = tw.id_tempat 
+                WHERE pt.id = LAST_INSERT_ID()";
         
-                if ($connect->query($sql)) {
-                    $sql2 = "SELECT pemesanan_tiket.*, `tempat-wisata`.tempat_wisata, `tempat-wisata`.harga FROM pemesanan_tiket JOIN `tempat-wisata` ON pemesanan_tiket.tempat_wisata = `tempat-wisata`.id_tempat WHERE pemesanan_tiket.id = (SELECT MAX(id) FROM pemesanan_tiket)";
-  
-                    $query = mysqli_query($connect, $sql2);
-                    while ($data = mysqli_fetch_array($query)) {
-                        $potongan = $data['harga'] * $data['pengunjung_anak'];
-                    
-                        $tempat_wisata = $data['tempat_wisata'];
-                        $harga = $data['harga'];
-                    }
-                
-                    echo "<script>
-                        Swal.fire({
-                            icon: 'success',
-                            title: 'Berhasil!',
-                            text: 'Pemesanan tiket berhasil disimpan',
-                            confirmButtonColor: '#212529'
-                        }).then(() => {
-                            Swal.fire({
-                                title: 'Data Pemesanan',
-                                html: `
-                                    <p><strong>Nama:</strong> $nama</p>
-                                    <p><strong>Nomor Identitas:</strong> $no_identitas</p>
-                                    <p><strong>Nomor HP:</strong> $no_hp</p>
-                                    <p><strong>Tempat Wisata:</strong> $tempat_wisata</p>
-                                    <p><strong>Tanggal Kunjungan:</strong> $tanggal</p>
-                                    <p><strong>Jumlah Pengunjung:</strong> $jumlah_pengunjung</p>
-                                    <p><strong>Pengunjung Anak:</strong> $pengunjung_anak</p>
-                                    <p><strong>Potongan harga:</strong> Rp. $potongan</p>
-                                    <p><strong>Total Bayar:</strong> $total</p>
-                                `,
-                                icon: 'info',
-                                confirmButtonText: 'OK'
-                            });
-                        });
-                    </script>";
-                }
-            }
-        ?>
+        $result = $connect->query($sql2);
+        if ($data = $result->fetch_assoc()) {
+            $formData['potongan'] = $data['harga'] * $data['pengunjung_anak'];
+            $formData['tempat_wisata_nama'] = $data['tempat_wisata'];
+        }
+    }
+}
+?>
+
+<!-- Replace the existing modal code with this -->
+<div class="modal fade" id="pemesananModal" tabindex="-1" aria-labelledby="pemesananModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="pemesananModalLabel">Detail Pemesanan</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div id="modalContent">
+                    <!-- Content will be populated dynamically -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="pemesananModal" tabindex="-1" aria-labelledby="pemesananModalLabel" aria-hidden="true" data-bs-backdrop="static">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="pemesananModalLabel">Detail Pemesanan</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" onclick="window.location.reload();"></button>
+            </div>
+            <div class="modal-body">
+                <div id="modalContent">
+                    <!-- Content will be populated dynamically -->
+                </div>
+            </div>
+            <div class="modal-footer">
+    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" onclick="window.location.reload();">Close</button>
+</div>
+
+        </div>
+    </div>
+</div>
 
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.querySelector('form');
+    form.addEventListener('submit', function(e) {
+        e.preventDefault();
+        // Submit the form data
+        fetch(form.action, {
+            method: 'POST',
+            body: new FormData(form)
+        })
+        .then(response => {
+            // Show the modal
+            var myModal = new bootstrap.Modal(document.getElementById('pemesananModal'));
+            myModal.show();
+        });
+    });
+});
+</script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.querySelector('form');
+    form.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        // Get form values
+        const nama = document.getElementById('nama').value;
+        const noIdentitas = document.getElementById('no_identitas').value;
+        const noHp = document.getElementById('no_hp').value;
+        const tempatWisata = document.getElementById('tempat_wisata');
+        const tempatWisataText = tempatWisata.options[tempatWisata.selectedIndex].text;
+        const tanggal = document.getElementById('tanggal').value;
+        const jumlahPengunjung = document.getElementById('jumlah_pengunjung').value;
+        const pengunjungAnak = document.getElementById('pengunjung_anak').value;
+        const total = document.getElementById('total').value;
+
+        // Format currency
+        const formatter = new Intl.NumberFormat('id-ID', {
+            style: 'currency',
+            currency: 'IDR'
+        });
+
+        // Populate modal content
+        const modalContent = `
+            <p><strong>Nama:</strong> ${nama}</p>
+            <p><strong>Nomor Identitas:</strong> ${noIdentitas}</p>
+            <p><strong>Nomor HP:</strong> ${noHp}</p>
+            <p><strong>Tempat Wisata:</strong> ${tempatWisataText}</p>
+            <p><strong>Tanggal Kunjungan:</strong> ${tanggal}</p>
+            <p><strong>Jumlah Pengunjung:</strong> ${jumlahPengunjung}</p>
+            <p><strong>Pengunjung Anak:</strong> ${pengunjungAnak}</p>
+            <p><strong>Total Bayar:</strong> ${formatter.format(total)}</p>
+        `;
+
+        document.getElementById('modalContent').innerHTML = modalContent;
+
+        // Show modal
+        const modal = new bootstrap.Modal(document.getElementById('pemesananModal'));
+        modal.show();
+
+        // Submit form data to server
+        form.submit();
+    });
+});
+</script>
+
+
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.min.js"></script>
     <script src="./js/script.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-
   </body>
 </html>
